@@ -69,6 +69,7 @@ class mikrotik_():
 						elif '+' in y.split():
 							if y.split()[1] in x[:]:
 								self.filtered_log.append(x.split())
+								break
 						else:
 							logger.warning(f"There is some unknown symbol on pattern - !! ({y})")
 							continue
