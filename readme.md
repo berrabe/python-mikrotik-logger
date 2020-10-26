@@ -73,7 +73,6 @@ cat mikrotik.log
 <p align="center">
   <img src="docs/terminal.png">
   <br>
-  sdgsdg sdgsdfgsdfgsdg
 </p>
 
 <p align="center">
