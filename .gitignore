@@ -9,6 +9,8 @@ __pycache__/
 *$py.class
 .__last_sessions__
 mikrotik.log
+main.py
+test.py
 
 # C extensions
 *.so
