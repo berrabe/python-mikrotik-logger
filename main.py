@@ -13,6 +13,8 @@ if __name__ == '__main__':
 
 		obj=mikrotik_.mikrotik_(pattern = [
 			'- info',
+			'- logged',
+			'+ critical',
 			'+ ssh', 
 			])
 
