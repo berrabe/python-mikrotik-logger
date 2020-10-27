@@ -65,10 +65,12 @@ class mikrotik_():
 					for y in self.pattern:
 						if '-' in y.split():
 							if y.split()[1] in x[:]:
+								logger.info(f"Got - {y.split()[1]} Pattern")
 								break
 						elif '+' in y.split():
 							if y.split()[1] in x[:]:
 								self.filtered_log.append(x.split())
+								logger.info(f"Got + {y.split()[1]} Pattern")
 								break
 						else:
 							logger.warning(f"There is some unknown symbol on pattern - !! ({y})")
@@ -111,7 +113,7 @@ class mikrotik_():
 						"parse_mode" : "html"
 					}
 			
-					req_ = requests.post(f"https://api.telegram.org/bot{token}/sendMessage", data = data, timeout = 3)
+					req_ = requests.post(f"https://api.telegram.org/bot{token}/sendMessage", data = data, timeout = 5)
 					if req_.status_code == 200:
 						logger.info(f"Telegram Notif Success {req_.status_code} - {chatid}")
 					else:
