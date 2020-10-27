@@ -113,7 +113,8 @@ class mikrotik_():
 						"parse_mode" : "html"
 					}
 			
-					req_ = requests.post(f"https://api.telegram.org/bot{token}/sendMessage", data = data, timeout = 5)
+					time.sleep(2)
+					req_ = requests.post(f"https://api.telegram.org/bot{token}/sendMessage", data = data, timeout = 10)
 					if req_.status_code == 200:
 						logger.info(f"Telegram Notif Success {req_.status_code} - {chatid}")
 					else:
