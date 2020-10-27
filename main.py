@@ -6,16 +6,20 @@ if __name__ == '__main__':
 	try:
 		logging.basicConfig(
 			level = logging.INFO, 
-			filename='mikrotik.log', filemode='w',
+			filename='mikrotik.log', filemode='a',
 			format = '[ %(levelname)s ] [ %(name)s ] [ %(asctime)s ] => %(message)s', 
 			datefmt='%d-%b-%y %H:%M:%S'
 			)
 
 		obj=mikrotik_.mikrotik_(pattern = [
-			'- info',
-			'- logged',
+			'- hotspot',
+			'+ error',
+			'+ logged',
+			'+ warning',
+			'+ down',
+			'+ rebooted',
 			'+ critical',
-			'+ ssh', 
+			'+ failure',
 			])
 
 		obj.start(
