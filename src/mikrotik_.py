@@ -7,7 +7,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-class mikrotik_():
+class MikrotikLogger():
 	"""docstring for mikrotik"""
 
 	def __init__(self, pattern=[], neg=[]):
