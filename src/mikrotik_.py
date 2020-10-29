@@ -184,7 +184,8 @@ class MikrotikLogger():
 						text = f" [!] {self.host} \n\n [+] {item[0]} \n [+] {item[1]} \n\n [=] {' '.join(item[2:])}"
 					else:
 						logger.info("Current Log Have Date In It, Send Format 2")
-						text = f" [!] {self.host} \n\n [+] {' '.join(item[0:2])} \n [+] {item[2]} \n\n [=] {' '.join(item[3:])}"
+						date = ' '.join(item[0:2])
+						text = f" [!] {self.host} \n\n [+] {date} \n [+] {item[2]} \n\n [=] {' '.join(item[3:])}"
 
 					data = {
 						"chat_id" : f"{chatid}",
@@ -193,7 +194,11 @@ class MikrotikLogger():
 					}
 
 					time.sleep(2)
-					req_ = requests.post(f"https://api.telegram.org/bot{token}/sendMessage", data = data, timeout = 10)
+
+					req_ = requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+						data = data,
+						timeout = 10)
+
 					if req_.status_code == 200:
 						logger.info("Telegram Notif SUCCESS (%s) - (%s)", req_.status_code, chatid)
 					else:
