@@ -7,6 +7,7 @@ created by berrabe
 """
 
 import time
+import sqlite3
 import os.path
 import logging
 import paramiko
@@ -27,8 +28,6 @@ class MikrotikLogger():
 		so that the log can be filtered
 		"""
 
-		logger.info("Initialization Pattern Success")
-
 		if pattern is None:
 			pattern = [
 			'+ critical',
@@ -46,6 +45,9 @@ class MikrotikLogger():
 		self.port = 22
 		self.username = "admin"
 		self.password = ""
+		self.conn = sqlite3.connect('logs.db')
+		self.curr = self.conn.cursor()
+
 
 
 	def start(self, host, port, username, password):
@@ -55,8 +57,6 @@ class MikrotikLogger():
 		variables on method constructor associated with mikrotik
 		login / ssh credential
 		"""
-
-		logger.info("Initialization Mikrotik Credential Success")
 
 		self.host = host
 		self.port = port
@@ -72,7 +72,7 @@ class MikrotikLogger():
 		device using ssh protocol
 		"""
 
-		logger.info("SSH to Mikrotik Device")
+		logger.info("SSH to Mikrotik Device (%s)", self.host)
 
 		try:
 			ssh = paramiko.SSHClient()
