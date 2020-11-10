@@ -68,7 +68,7 @@ class MikrotikLogger():
 		ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 		DATE TEXT NULL,
 		TIME TEXT NOT NULL,
-		CAT TEXT NOT NULL,
+		CATEGORY TEXT NOT NULL,
 		LOG TEXT NOT NULL
 		)
 		""")
@@ -82,7 +82,7 @@ class MikrotikLogger():
 		device using ssh protocol
 		"""
 
-		logger.info("SSH to Mikrotik Device (%s)", self.host)
+		logger.info("SSH - (%s)", self.host)
 
 		try:
 			ssh = paramiko.SSHClient()
@@ -96,12 +96,41 @@ class MikrotikLogger():
 			date = [i.split('/') for i in date.readlines()]
 			self.date = '/'.join(date[0][:2])
 
-			logger.info("SSH Success")
+			logger.info("SSH - Success")
 
 			return log.readlines()
 
 		except Exception:
 			logger.exception("SSH TO MIKROTIK ERROR")
+
+
+	def __add_log_date(self, logs):
+		"""
+		This method is useful for add date to raw_logs ...
+		cause mikrotik not included date when log in current day
+		"""
+
+		parse_log = []
+
+		try:
+			if len(logs) != 0:
+
+				for item in logs[:-1]:
+					item = item.split()
+
+					if len(item[0].split(':')) == 3:
+						item.insert(0, self.date)
+
+					parse_log.append(' '.join(item))
+
+			else:
+				logger.info("Empty Log, Abort Sending Database")
+
+			logger.info("Parsing Raw Log From (%s) - Success", self.host)
+			return parse_log
+
+		except Exception:
+			logger.exception('Sending To Database Error')
 
 
 	def __last_session(self):
@@ -112,15 +141,14 @@ class MikrotikLogger():
 		"""
 
 		try:
-
-			self.curr.execute(f"SELECT * FROM '{self.db_table}'")
-			data = self.curr.fetchall()
+			self.curr.execute(f"SELECT * FROM '{self.db_table}' ORDER BY ID DESC" )
+			data = self.curr.fetchone()
 
 			if len(data) == 0:
 				logger.info("Session Not Exist, Starting From Beginning")
 			else:
 				logger.info("Session Exist, Starting From Session")
-				return ' '.join(data[-1][2:]).split()
+				return ' '.join(data[1:]).split()
 
 			return 'none'
 
@@ -138,15 +166,12 @@ class MikrotikLogger():
 		try:
 
 			start = 0
-			logs = self.__ssh()
-
+			raw_logs = self.__ssh()
+			logs = self.__add_log_date(raw_logs)
 			session = self.__last_session()
-
-			logger.info("Ready For Filtering Log Based Given Pattern")
 
 			for log in logs:
 				if session == log.split() and session != 'none':
-					logger.info("Filtering Mikrotik Log From Session")
 					start = 1
 					continue
 
@@ -257,12 +282,8 @@ class MikrotikLogger():
 
 				for item in self.filtered_log:
 
-					if len(item[0].split(':')) == 3:
-						self.curr.execute(f"INSERT INTO '{self.db_table}' VALUES (NULL, :date, :time, :cat, :log)",
-							{'date' : self.date, 'time' : item[0], 'cat' : item[1], 'log' : " ".join(item[2:])})
-					else:
-						self.curr.execute(f"INSERT INTO '{self.db_table}' VALUES (NULL, :date, :time, :cat, :log)",
-							{'date' : item[0], 'time' : item[1], 'cat' : item[2], 'log' : " ".join(item[3:])})
+					self.curr.execute(f"INSERT INTO '{self.db_table}' VALUES (NULL, :date, :time, :cat, :log)",
+						{'date' : item[0], 'time' : item[1], 'cat' : item[2], 'log' : " ".join(item[3:])})
 
 				self.conn.commit()
 
