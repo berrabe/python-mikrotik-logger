@@ -11,6 +11,7 @@ __pycache__/
 mikrotik.log
 main.py
 test.py
+db_test.py
 
 # C extensions
 *.so
