@@ -143,8 +143,9 @@ class MikrotikLogger():
 		try:
 			self.curr.execute(f"SELECT * FROM '{self.db_table}' ORDER BY ID DESC" )
 			data = self.curr.fetchone()
+			print(data)
 
-			if len(data) == 0:
+			if data == None:
 				logger.info("Session Not Exist, Starting From Beginning")
 			else:
 				logger.info("Session Exist, Starting From Session")
@@ -238,13 +239,8 @@ class MikrotikLogger():
 				for item in self.filtered_log:
 
 					logger.info("Send Notif To Telegram Bot (%s)", token)
-					if len(item[0].split(':')) == 3:
-						logger.info("Current Log Does Not Have Date, Send Format 1")
-						text = f" [!] {self.host} \n\n [+] {item[0]} \n [+] {item[1]} \n\n [=] {' '.join(item[2:])}"
-					else:
-						logger.info("Current Log Have Date In It, Send Format 2")
-						date = ' '.join(item[0:2])
-						text = f" [!] {self.host} \n\n [+] {date} \n [+] {item[2]} \n\n [=] {' '.join(item[3:])}"
+					date = ' '.join(item[0:2])
+					text = f" [!] {self.host} \n\n [+] {date} \n [+] {item[2]} \n\n [=] {' '.join(item[3:])}"
 
 					data = {
 						"chat_id" : f"{chatid}",
