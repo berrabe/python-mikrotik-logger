@@ -143,7 +143,6 @@ class MikrotikLogger():
 		try:
 			self.curr.execute(f"SELECT * FROM '{self.db_table}' ORDER BY ID DESC" )
 			data = self.curr.fetchone()
-			print(data)
 
 			if data == None:
 				logger.info("Session Not Exist, Starting From Beginning")
