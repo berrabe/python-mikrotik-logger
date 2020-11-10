@@ -8,7 +8,6 @@ created by berrabe
 
 import time
 import sqlite3
-import os.path
 import logging
 import paramiko
 import requests
@@ -89,14 +88,44 @@ class MikrotikLogger():
 			ssh = paramiko.SSHClient()
 			ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 			ssh.connect(self.host, self.port, self.username, self.password, look_for_keys=False)
-			stdin, stdout, stderr = ssh.exec_command("/log print")
+			logger.info("SSH - Get Log File")
+			stdin, log, stderr = ssh.exec_command("/log print")
+			logger.info("SSH - Get Current Date")
+			stdin, date, stderr = ssh.exec_command(":put [/system clock get date]")
+
+			date = [i.split('/') for i in date.readlines()]
+			self.date = '/'.join(date[0][:2])
 
 			logger.info("SSH Success")
 
-			return stdout.readlines()
+			return log.readlines()
 
 		except Exception:
 			logger.exception("SSH TO MIKROTIK ERROR")
+
+
+	def __last_session(self):
+		"""
+		This method is useful for detect the last session from
+		SQLite Database ... this method very important for
+		method filtering
+		"""
+
+		try:
+
+			self.curr.execute(f"SELECT * FROM '{self.db_table}'")
+			data = self.curr.fetchall()
+
+			if len(data) == 0:
+				logger.info("Session Not Exist, Starting From Beginning")
+			else:
+				logger.info("Session Exist, Starting From Session")
+				return ' '.join(data[-1][2:]).split()
+
+			return 'none'
+
+		except Exception:
+			logger.exception("GATHER SESSION FAILED")
 
 
 	def __filtering(self):
@@ -107,18 +136,11 @@ class MikrotikLogger():
 		"""
 
 		try:
+
 			start = 0
 			logs = self.__ssh()
 
-			self.curr.execute(f"SELECT * FROM '{self.db_table}'")
-			data = self.curr.fetchall()
-
-			if len(data) == 0:
-				session = 'none'
-				logger.info("Session Not Exist, Starting From Beginning")
-			else:
-				logger.info("Session Exist, Starting From Session")
-				session = ' '.join(data[-1][2:]).split()
+			session = self.__last_session()
 
 			logger.info("Ready For Filtering Log Based Given Pattern")
 
@@ -225,17 +247,8 @@ class MikrotikLogger():
 
 	def __db(self):
 		"""
-		This method is used to send new filtered log to
-		the telegram, via telegram bot
-
-		2 modes of delivery:
-
-		First, delivery because
-		it has no date, only time
-
-		second, the shipment that has a date,
-		because the log occurred not on that day, but already ...
-		the format of mikrotik
+		This method is used to send filtered log to
+		the SQLite 3 Database
 		"""
 
 		try:
@@ -245,9 +258,11 @@ class MikrotikLogger():
 				for item in self.filtered_log:
 
 					if len(item[0].split(':')) == 3:
-						self.curr.execute(f"INSERT INTO '{self.db_table}' VALUES (NULL, NULL, :time, :cat, :log)", {'date' : '-', 'time' : item[0], 'cat' : item[1], 'log' : " ".join(item[2:])})
+						self.curr.execute(f"INSERT INTO '{self.db_table}' VALUES (NULL, :date, :time, :cat, :log)",
+							{'date' : self.date, 'time' : item[0], 'cat' : item[1], 'log' : " ".join(item[2:])})
 					else:
-						self.curr.execute(f"INSERT INTO '{self.db_table}' VALUES (NULL, :date, :time, :cat, :log)", {'date' : item[0], 'time' : item[1], 'cat' : item[2], 'log' : " ".join(item[3:])})
+						self.curr.execute(f"INSERT INTO '{self.db_table}' VALUES (NULL, :date, :time, :cat, :log)",
+							{'date' : item[0], 'time' : item[1], 'cat' : item[2], 'log' : " ".join(item[3:])})
 
 				self.conn.commit()
 
