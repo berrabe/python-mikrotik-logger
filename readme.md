@@ -78,3 +78,7 @@ cat mikrotik.log
 <p align="center">
   <img src="docs/telegram.png">
 </p>
+
+<p align="center">
+  <img src="docs/db.png">
+</p>
