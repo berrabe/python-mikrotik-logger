@@ -2,7 +2,7 @@
   <img src="docs/logo.png">
 </p>
 
-
+<br/><br/>
 ### TLDR;
 ---
 This python program is used to monitor, filter, and trigger log events on MikroTik RouterOS devices
@@ -13,61 +13,54 @@ secondly, the program will filter out the word patterns that we have given / set
 
 This program can be run anywhere, both Linux, Windows ,MacOS and agentless, meaning on the MikroTik side, no additional tools / scripts / programs are needed, **all you need is to allow ssh access to the MikroTik Device**
 
-
+<br/><br/>
 ### USAGE
 ---
-- a very general first step, clone this repo, and do a few steps like the steps below to make sure this program can run perfectly
+- first step, clone this repo, and do a few steps like the steps below to make sure this program can run perfectly
 ```sh
-git clone https://github.com/berrabe/python-mikrotik-logger.git
-cd python-mikrotik-logger
-pip install -r requirements.txt
+> git clone https://github.com/berrabe/python-mikrotik-logger.git
+> cd python-mikrotik-logger
+> pip install -r requirements.txt
 ```
 
-- then, we will set some parameters that are used so that this program runs as we want, edit the **main.py** file with your favorite code editor
-  - the pattern below will filter all logs which contain the word `ssh` and `critical` in them but no `info` and `logged` word, make the program catch ssh login failures, not ssh login info
-  - **put the word pattern you want to get rid of / ignore before the word you want to catch**
-```python
-obj=mikrotik_.mikrotik_(pattern = [
-			'- info',
-			'- logged',
-			'+ critical',
-			'+ ssh'
-			])
-```
-
-- the next step, fill in the credentials that are used to ssh into the MikroTik device, this is used so that the program can retrieve logs on the MikroTik Device with secure protocol and agentless
-```python
-obj.start(
-	host = "YOUR MIKROTIK IP", 
-	port = 22, 
-	username = "YOUR MIKROTIK USER", 
-	password = "YOUR MIKROTIK PASSWORD"
-	)
-```
+- then, we will set some parameters that are used so that this program runs as we want, edit the **hosts.yml** file with your favorite code editor
+```yaml
+mtk_devices:
+  patterns:
+    - '- hotspot'
+    - '- monitoring'
+    - '+ error'
+    - '+ logged'
+    - '+ warning'
+    - '+ down'
+    - '+ rebooted'
+    - '+ critical'
+    - '+ failure'
 
 
-- You can see the most recent logs filtered by this program in the terminal by using this command
-```python
-obj.show()
-```
+  vars:
+    telegram_token: < YOUR TELEGRAM TOKEN >
+    telegran_chatid: '< YOUR TELEGRAM CHAT ID >'
 
-- and if you want to activate telegram notifications if there is a new log, you can use this function, make sure you already have a telegram bot token and also a chat id
-```python
-obj.notif_telegram(
-  token = 'YOUR TELEGRAM BOT TOKEN', 
-  chatid = 'YOUR TELEGRAM CHATID')
+
+  hosts:
+    host_1:
+      mtk_host: < MIKROTIK HOST IP / DOMAIN >
+      mtk_port: < MIKROTIK SSH PORT >
+      mtk_username: < MIKROTIK LOGIN USERNAME >
+      mtk_password: < MIROTIK LOGIN PASSWORD >
+
 ```
 
 - lastly, run this program with the command
 ```sh
-python main.py
+> python3 main.py
+
+# if you need some verbose output of what this program is doing
+> cat python-mikrotik-logger.log
 ```
 
-- You can also see in realtime what this program is doing in the mikrotik.log file in the same folder as main.py
-```sh
-cat mikrotik.log
-```
-
+<br/><br/>
 ### SCREENSHOT
 ---
 <p align="center">
