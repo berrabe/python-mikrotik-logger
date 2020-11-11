@@ -7,6 +7,7 @@ created by berrabe
 """
 
 import time
+import sys
 import sqlite3
 import logging
 import paramiko
@@ -104,6 +105,7 @@ class MikrotikLogger():
 
 		except Exception:
 			logger.exception("SSH TO MIKROTIK ERROR")
+			sys.exit(1)
 
 
 	def __add_log_date(self, logs):
@@ -133,6 +135,7 @@ class MikrotikLogger():
 
 		except Exception:
 			logger.exception('Sending To Database Error')
+			sys.exit(1)
 
 
 	def __last_session(self):
@@ -156,6 +159,7 @@ class MikrotikLogger():
 
 		except Exception:
 			logger.exception("GATHER SESSION FAILED")
+			sys.exit(1)
 
 
 	def __filtering(self):
@@ -206,6 +210,7 @@ class MikrotikLogger():
 
 		except Exception:
 			logger.exception("FILTERING LOG ERROR")
+			sys.exit(1)
 
 
 	def show(self):
@@ -264,6 +269,7 @@ class MikrotikLogger():
 
 		except Exception:
 			logger.exception('Telegram Notif Error')
+			sys.exit(1)
 
 
 
@@ -290,3 +296,4 @@ class MikrotikLogger():
 
 		except Exception:
 			logger.exception('Sending To Database Error')
+			sys.exit(1)
