@@ -37,13 +37,13 @@ class MikrotikLogger():
 			'+ failure'
 			]
 
-		self.list_all = []
 		self.filtered_log = []
 		self.patterns = pattern
 		self.host = "192.168.1.1"
 		self.port = 22
 		self.username = "admin"
 		self.password = ""
+		self.date = None
 
 		self.conn = sqlite3.connect('logs.db')
 		self.curr = self.conn.cursor()
@@ -88,15 +88,17 @@ class MikrotikLogger():
 			ssh = paramiko.SSHClient()
 			ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 			ssh.connect(self.host, self.port, self.username, self.password, look_for_keys=False)
-			logger.info("SSH - Get Log File")
-			stdin, log, stderr = ssh.exec_command("/log print")
-			logger.info("SSH - Get Current Date")
+
+			logger.info("SSH => Get Current Date")
 			stdin, date, stderr = ssh.exec_command(":put [/system clock get date]")
 
 			date = [i.split('/') for i in date.readlines()]
 			self.date = '/'.join(date[0][:2])
 
-			logger.info("SSH - Success")
+			logger.info("SSH => Get Log File")
+			stdin, log, stderr = ssh.exec_command("/log print")
+
+			logger.info("SSH => Success")
 
 			return log.readlines()
 
@@ -144,10 +146,10 @@ class MikrotikLogger():
 			self.curr.execute(f"SELECT * FROM '{self.db_table}' ORDER BY ID DESC" )
 			data = self.curr.fetchone()
 
-			if data == None:
-				logger.info("Session Not Exist, Starting From Beginning")
+			if data is None:
+				logger.info("Log Session Does Not Exist, Start Filtering New Log From Beginning")
 			else:
-				logger.info("Session Exist, Starting From Session")
+				logger.info("Log Session Exist")
 				return ' '.join(data[1:]).split()
 
 			return 'none'
@@ -164,7 +166,6 @@ class MikrotikLogger():
 		"""
 
 		try:
-
 			start = 0
 			raw_logs = self.__ssh()
 			logs = self.__add_log_date(raw_logs)
@@ -172,6 +173,7 @@ class MikrotikLogger():
 
 			for log in logs:
 				if session == log.split() and session != 'none':
+					logger.info("Raw Log and Sesion Log Match, Start Filtering New Log From Last Session")
 					start = 1
 					continue
 
