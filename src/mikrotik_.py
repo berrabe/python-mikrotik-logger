@@ -150,9 +150,9 @@ class MikrotikLogger():
 			data = self.curr.fetchone()
 
 			if data is None:
-				logger.info("Log Session Does Not Exist, Start Filtering New Log From Beginning")
+				logger.info("Session Log Does Not Exist, Start Filtering New Log From Beginning")
 			else:
-				logger.info("Log Session Exist")
+				logger.info("Session Log Exist")
 				return ' '.join(data[1:]).split()
 
 			return 'none'
