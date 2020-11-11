@@ -12,6 +12,7 @@ mikrotik.log
 main.py
 test.py
 db_test.py
+logs.db
 
 # C extensions
 *.so

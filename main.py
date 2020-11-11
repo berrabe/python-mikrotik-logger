@@ -9,6 +9,7 @@ created by berrabe
 
 import logging
 import sys
+import yaml
 from src import mikrotik_
 
 if __name__ == '__main__':
@@ -20,28 +21,31 @@ if __name__ == '__main__':
 			datefmt='%d-%b-%y %H:%M:%S'
 			)
 
-		obj = mikrotik_.MikrotikLogger(pattern = [
-			'- hotspot',
-			'+ error',
-			'+ logged',
-			'+ warning',
-			'+ down',
-			'+ rebooted',
-			'+ critical',
-			'+ failure',
-			])
 
-		obj.start(
-			host = "YOUR MIKROTIK IP",
-			port = 22,
-			username = "YOUR MIKROTIK USER",
-			password = "YOUR MIKROTIK PASSWORD"
-			)
+		with open('hosts.yml') as yaml_:
+			conf = yaml.load(yaml_, Loader=yaml.FullLoader).get('mtk_devices')
+			hosts = conf['hosts']
+			patterns = conf['patterns']
+			var = conf['vars']
 
-		obj.show()
-		obj.notif_telegram(
-			token = 'YOUR TELEGRAM BOT TOKEN',
-			chatid = 'YOUR TELEGRAM CHATID')
+
+		obj = mikrotik_.MikrotikLogger(pattern = patterns)
+
+
+		for host in hosts.keys():
+
+			obj.start(
+				host = hosts[host]['mtk_host'],
+				port = hosts[host]['mtk_port'],
+				username = hosts[host]['mtk_username'],
+				password = hosts[host]['mtk_password']
+				)
+
+			obj.notif_telegram(
+				token = var['telegram_token'],
+				chatid = var['telegran_chatid'])
+
+			obj.show()
 
 	except KeyboardInterrupt:
 		sys.exit(17)
