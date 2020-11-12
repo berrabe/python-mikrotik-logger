@@ -65,7 +65,15 @@ class MikrotikLogger():
 		self.password = password
 		self.db_table = self.host.replace('.','_')
 
-		self.curr.execute(f"""CREATE TABLE IF NOT EXISTS '{self.db_table}' (
+		self.curr.execute(f"""CREATE TABLE IF NOT EXISTS '{self.db_table}_logs' (
+		ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+		DATE TEXT NULL,
+		TIME TEXT NOT NULL,
+		CATEGORY TEXT NOT NULL,
+		LOG TEXT NOT NULL
+		)
+		""")
+		self.curr.execute(f"""CREATE TABLE IF NOT EXISTS '{self.db_table}_session' (
 		ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 		DATE TEXT NULL,
 		TIME TEXT NOT NULL,
@@ -146,7 +154,7 @@ class MikrotikLogger():
 		"""
 
 		try:
-			self.curr.execute(f"SELECT * FROM '{self.db_table}' ORDER BY ID DESC" )
+			self.curr.execute(f"SELECT * FROM '{self.db_table}_session' ORDER BY ID DESC" )
 			data = self.curr.fetchone()
 
 			if data is None:
@@ -201,12 +209,19 @@ class MikrotikLogger():
 			if len(self.filtered_log) != 0:
 
 				logger.info("Got (%s) New Record", len(self.filtered_log))
-				logger.info("Last Record On (%s)", self.filtered_log[-1])
 
 				self.__db()
 
 			else:
 				logger.info("No New Log Detected")
+
+			sess_buff = logs[-1].split()
+			logger.info("Last Record On (%s)", sess_buff)
+			self.curr.execute(f"INSERT INTO '{self.db_table}_session' VALUES (NULL, :date, :time, :cat, :log)",
+						{'date' : sess_buff[0], 'time' : sess_buff[1], 'cat' : sess_buff[2], 'log' : " ".join(sess_buff[3:])})
+
+			self.conn.commit()
+
 
 		except Exception:
 			logger.exception("FILTERING LOG ERROR")
@@ -285,7 +300,7 @@ class MikrotikLogger():
 
 				for item in self.filtered_log:
 
-					self.curr.execute(f"INSERT INTO '{self.db_table}' VALUES (NULL, :date, :time, :cat, :log)",
+					self.curr.execute(f"INSERT INTO '{self.db_table}_logs' VALUES (NULL, :date, :time, :cat, :log)",
 						{'date' : item[0], 'time' : item[1], 'cat' : item[2], 'log' : " ".join(item[3:])})
 
 				self.conn.commit()
