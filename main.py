@@ -10,7 +10,7 @@ created by berrabe
 import logging
 import sys
 import yaml
-from src import mikrotik_
+from src import mikrotik_, notif_
 
 if __name__ == '__main__':
 	try:
@@ -29,23 +29,19 @@ if __name__ == '__main__':
 			var = conf['vars']
 
 
-		obj = mikrotik_.MikrotikLogger(pattern = patterns)
-
-
 		for host in hosts.keys():
 
-			obj.start(
+			MikrotikLogger = mikrotik_.MikrotikLogger(
+				pattern = patterns,
 				host = hosts[host]['mtk_host'],
 				port = hosts[host]['mtk_port'],
 				username = hosts[host]['mtk_username'],
-				password = hosts[host]['mtk_password']
-				)
+				password = hosts[host]['mtk_password'])
 
-			obj.notif_telegram(
+			Notif = notif_.Notif(host = hosts[host]['mtk_host'])
+			Notif.telegram_notif(
 				token = var['telegram_token'],
 				chatid = var['telegran_chatid'])
-
-			obj.show()
 
 	except KeyboardInterrupt:
 		sys.exit(17)

@@ -6,12 +6,10 @@ send filtered log to the telegram
 created by berrabe
 """
 
-import time
 import sys
-import sqlite3
 import logging
 import paramiko
-import requests
+import src.db_
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +18,7 @@ class MikrotikLogger():
 	Class Mikrotik Logger
 	"""
 
-	def __init__(self, pattern = None):
+	def __init__(self, pattern = None, host = "192.168.1.1", port = "22", username = "admin", password = ""):
 		"""
 		Constructor Class MikrotikLogger,
 		when make object form MikrotikClass,
@@ -40,48 +38,13 @@ class MikrotikLogger():
 
 		self.filtered_log = []
 		self.patterns = pattern
-		self.host = "192.168.1.1"
-		self.port = 22
-		self.username = "admin"
-		self.password = ""
-		self.date = None
-
-		self.conn = sqlite3.connect('logs.db')
-		self.curr = self.conn.cursor()
-		self.db_table = "192_168_1_1"
-
-
-	def start(self, host, port, username, password):
-		"""
-		This method is useful for running log filtering
-		based on given pattern. You must overrides hardcoded
-		variables on method constructor associated with mikrotik
-		login / ssh credential
-		"""
-
 		self.host = host
 		self.port = port
 		self.username = username
 		self.password = password
-		self.db_table = self.host.replace('.','_')
+		self.date = None
 
-		self.curr.execute(f"""CREATE TABLE IF NOT EXISTS '{self.db_table}_logs' (
-		ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-		DATE TEXT NULL,
-		TIME TEXT NOT NULL,
-		CATEGORY TEXT NOT NULL,
-		LOG TEXT NOT NULL
-		)
-		""")
-		self.curr.execute(f"""CREATE TABLE IF NOT EXISTS '{self.db_table}_session' (
-		ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-		DATE TEXT NULL,
-		TIME TEXT NOT NULL,
-		CATEGORY TEXT NOT NULL,
-		LOG TEXT NOT NULL
-		)
-		""")
-
+		self.db_conn = src.db_.DB(self.host.replace('.','_'))
 		self.__filtering()
 
 
@@ -146,29 +109,6 @@ class MikrotikLogger():
 			sys.exit(1)
 
 
-	def __last_session(self):
-		"""
-		This method is useful for detect the last session from
-		SQLite Database ... this method very important for
-		method filtering
-		"""
-
-		try:
-			self.curr.execute(f"SELECT * FROM '{self.db_table}_session' ORDER BY ID DESC" )
-			data = self.curr.fetchone()
-
-			if data is None:
-				logger.info("Session Log Does Not Exist, Start Filtering New Log From Beginning")
-			else:
-				logger.info("Session Log Exist")
-				return ' '.join(data[1:]).split()
-
-			return 'none'
-
-		except Exception:
-			logger.exception("GATHER SESSION FAILED")
-			sys.exit(1)
-
 
 	def __filtering(self):
 		"""
@@ -181,7 +121,7 @@ class MikrotikLogger():
 			start = 0
 			raw_logs = self.__ssh()
 			logs = self.__add_log_date(raw_logs)
-			session = self.__last_session()
+			session = self.db_conn.get_last_session()
 
 			for log in logs:
 				if session == log.split() and session != 'none':
@@ -192,11 +132,11 @@ class MikrotikLogger():
 				if session == 'none' or start == 1:
 					for pattern in self.patterns:
 						if '-' in pattern.split():
-							if pattern.split()[1] in log[:]:
+							if ' '.join(pattern.split()[1:]) in log[:]:
 								logger.info("Got - (%s) Pattern", pattern.split()[1])
 								break
 						elif '+' in pattern.split():
-							if pattern.split()[1] in log[:]:
+							if ' '.join(pattern.split()[1:]) in log[:]:
 								self.filtered_log.append(log.split())
 								logger.info("Got + (%s) Pattern", pattern.split()[1])
 								break
@@ -210,18 +150,15 @@ class MikrotikLogger():
 
 				logger.info("Got (%s) New Record", len(self.filtered_log))
 
-				self.__db()
+				# self.__db()
+				self.db_conn.insert_filtered_log(self.filtered_log)
 
 			else:
 				logger.info("No New Log Detected")
 
 			sess_buff = logs[-1].split()
 			logger.info("Last Record On (%s)", sess_buff)
-			self.curr.execute(f"INSERT INTO '{self.db_table}_session' VALUES (NULL, :date, :time, :cat, :log)",
-						{'date' : sess_buff[0], 'time' : sess_buff[1], 'cat' : sess_buff[2], 'log' : " ".join(sess_buff[3:])})
-
-			self.conn.commit()
-
+			self.db_conn.insert_latest_session(sess_buff)
 
 		except Exception:
 			logger.exception("FILTERING LOG ERROR")
@@ -238,77 +175,3 @@ class MikrotikLogger():
 			# [ print(x[:]) for x in self.filtered_log ]
 			for log in self.filtered_log:
 				print(log[:])
-
-
-	def notif_telegram(self, token = '', chatid = ''):
-		"""
-		This method is used to send new filtered log to
-		the telegram, via telegram bot
-
-		2 modes of delivery:
-
-		First, delivery because
-		it has no date, only time
-
-		second, the shipment that has a date,
-		because the log occurred not on that day, but already ...
-		the format of mikrotik
-		"""
-
-		try:
-			if len(self.filtered_log) != 0:
-				for item in self.filtered_log:
-
-					logger.info("Send Notif To Telegram Bot (%s)", token)
-					date = ' '.join(item[0:2])
-					text = f" [!] {self.host} \n\n [+] {date} \n [+] {item[2]} \n\n [=] {' '.join(item[3:])}"
-
-					data = {
-						"chat_id" : f"{chatid}",
-						"text" : f"<code>{text}</code>",
-						"parse_mode" : "html"
-					}
-
-					time.sleep(2)
-
-					req_ = requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
-						data = data,
-						timeout = 10)
-
-					if req_.status_code == 200:
-						logger.info("Telegram Notif SUCCESS (%s) - (%s)", req_.status_code, chatid)
-					else:
-						logger.info("Telegram Notif FAILED (%s) - (%s)", req_.status_code, chatid)
-			else:
-				logger.info("Empty Log, Abort Sending Notif")
-
-		except Exception:
-			logger.exception('Telegram Notif Error')
-			sys.exit(1)
-
-
-
-	def __db(self):
-		"""
-		This method is used to send filtered log to
-		the SQLite 3 Database
-		"""
-
-		try:
-			if len(self.filtered_log) != 0:
-				logger.info("Sending To Database")
-
-				for item in self.filtered_log:
-
-					self.curr.execute(f"INSERT INTO '{self.db_table}_logs' VALUES (NULL, :date, :time, :cat, :log)",
-						{'date' : item[0], 'time' : item[1], 'cat' : item[2], 'log' : " ".join(item[3:])})
-
-				self.conn.commit()
-
-
-			else:
-				logger.info("Empty Log, Abort Sending Database")
-
-		except Exception:
-			logger.exception('Sending To Database Error')
-			sys.exit(1)
