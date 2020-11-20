@@ -33,7 +33,7 @@ class Notif():
 		"""
 
 		try:
-			logger.info("Send Notif To Telegram Bot (%s) (%s)", token, chatid)
+			logger.info("Starting Telegram Bot (%s) (%s)", token, chatid)
 
 			new_log = self.db_conn.get_new_log_tele()
 
@@ -55,13 +55,13 @@ class Notif():
 						timeout = 10)
 
 					if req_.status_code == 200:
-						self.db_conn.insert_new_log_tele(log[0], ' '.join(log[1:]), 'SUCCESS')
 						logger.info("Telegram Notif SUCCESS %s", log)
+						self.db_conn.insert_new_log_tele(log[0], ' '.join(log[1:]), 'SUCCESS')
 					else:
-						self.db_conn.insert_new_log_tele(log[0], ' '.join(log[1:]), 'FAILED')
 						logger.info("Telegram Notif FAILED %s", log)
+						self.db_conn.insert_new_log_tele(log[0], ' '.join(log[1:]), 'FAILED')
 			else:
-				logger.info('Log For Sending To Telegram is 0 ... ABORTING')
+				logger.info('No New Log For Sending To Telegram ... ABORTING')
 
 
 		except Exception:

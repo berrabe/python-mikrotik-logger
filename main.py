@@ -12,6 +12,8 @@ import sys
 import yaml
 from src import mikrotik_, notif_
 
+logger = logging.getLogger(__name__)
+
 if __name__ == '__main__':
 	try:
 		logging.basicConfig(
@@ -31,6 +33,8 @@ if __name__ == '__main__':
 
 		for host in hosts.keys():
 
+			logger.info(f"================== Logger Start @ {''.join(hosts[host]['mtk_host'][:])} ==================")
+
 			MikrotikLogger = mikrotik_.MikrotikLogger(
 				pattern = patterns,
 				host = hosts[host]['mtk_host'],
@@ -42,6 +46,8 @@ if __name__ == '__main__':
 			Notif.telegram_notif(
 				token = var['telegram_token'],
 				chatid = var['telegran_chatid'])
+
+			logger.info(f"================== Logger Done @ {''.join(hosts[host]['mtk_host'][:])} ==================\n\n")
 
 	except KeyboardInterrupt:
 		sys.exit(17)

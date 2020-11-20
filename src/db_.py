@@ -19,8 +19,6 @@ class DB():
 		Initialization Database
 		"""
 
-		logger.info("Initialization Database")
-
 		self.conn = sqlite3.connect('logs.db')
 		self.curr = self.conn.cursor()
 		self.db_table = db_table
@@ -86,14 +84,14 @@ class DB():
 		try:
 			if len(filtered_log) != 0:
 				logger.info("Checking Database Record, Prevent Duplication")
-				self.curr.execute(f"SELECT DATE,TIME,CATEGORY,LOG FROM '{self.db_table}_logs'")
+				self.curr.execute(f"SELECT TIME,CATEGORY,LOG FROM '{self.db_table}_logs'")
 				db_data = self.curr.fetchall()
 
 				for item in filtered_log:
 					item.insert(3, ' '.join(item[3:]))
 					del item[4:]
 
-					if tuple(item) not in db_data:
+					if tuple(item)[1:] not in db_data:
 						logger.info("Sending To Database (%s)", item)
 						self.curr.execute(f"INSERT INTO '{self.db_table}_logs' VALUES (NULL, :date, :time, :cat, :log)",
 							{'date' : item[0], 'time' : item[1], 'cat' : item[2], 'log' : " ".join(item[3:])})
@@ -122,6 +120,7 @@ class DB():
 			{'date' : sess_buff[0], 'time' : sess_buff[1], 'cat' : sess_buff[2], 'log' : " ".join(sess_buff[3:])})
 
 			self.conn.commit()
+			logger.info("Insert Latest Record to DB For Session")
 
 		except Exception:
 			logger.exception('SENDING LATEST SESSION ERROR')
@@ -130,8 +129,9 @@ class DB():
 
 	def get_new_log_tele(self):
 		"""
-		This method is used to send latest gathered
-		log from mikrotik device to notif_tele table
+		This method is used to get new filtered log
+		that have not been sended to telegram with
+		sql join
 		"""
 
 		try:
@@ -143,6 +143,8 @@ class DB():
 				WHERE '{self.db_table}_notif_tele'.STATUS IS NULL
 				""")
 			data = self.curr.fetchall()
+
+			logger.info("Get New Filtered Log For Sending to Telegram SUCCESS, Total (%s) New Log(s)", len(data))
 			return data
 
 		except Exception:
@@ -161,6 +163,7 @@ class DB():
 			{'id' : id_, 'log' : log, 'status' : status})
 
 			self.conn.commit()
+			logger.info("Update Telegram Status For ID (%s) to DB", id_)
 
 		except Exception:
 			logger.exception('INSERT NEW LOG FOR TELEGRAM ERROR')

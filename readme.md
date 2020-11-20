@@ -32,7 +32,8 @@ mtk_devices:
     - '+ error'
     - '+ logged'
     - '+ warning'
-    - '+ down'
+    - '+ link up'
+    - '+ link down'
     - '+ rebooted'
     - '+ critical'
     - '+ failure'
@@ -61,11 +62,28 @@ mtk_devices:
 ```
 
 <br/><br/>
+### RECOMMENDATION
+---
+I recommend some settings for mikrotik device(s) so that the python-mikrotik-logger program can work smoothly
+- First, move all log storage modes from default (memory) to disk, this is highly recommended considering mikrotik will clear all logs if the router shuts down / reboot
+```sh
+> /system logging set [/system logging find where action~"disk"] action=disk
+```
+
+- Second, for security reasons, create a user with restricted permissions only to ssh and retrieve logs
+```sh
+# add group called monitoring
+> /user group add name="monitoring" policy=ssh,read,!local,!telnet,!ftp,!reboot,!write,!policy,!test,!winbox,!password,!web,!sniff,!sensitive,!api,!romon,!dude,!tikapp skin=default
+
+# add user called monitoring with group monitoring
+> /user add name="monitoring" group=monitoring password=<YOUR CUSTOM PASSWORD>
+```
+
+<br/><br/>
 ### SCREENSHOT
 ---
 <p align="center">
-  <img src="docs/terminal.png">
-  <br>
+  <img src="docs/filtered_log.png">
 </p>
 
 <p align="center">
@@ -73,5 +91,9 @@ mtk_devices:
 </p>
 
 <p align="center">
-  <img src="docs/db.png">
+  <img src="docs/telegram_status.png">
+</p>
+
+<p align="center">
+  <img src="docs/logger.png">
 </p>

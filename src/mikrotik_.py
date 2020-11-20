@@ -133,12 +133,12 @@ class MikrotikLogger():
 					for pattern in self.patterns:
 						if '-' in pattern.split():
 							if ' '.join(pattern.split()[1:]) in log[:]:
-								logger.info("Got - (%s) Pattern", pattern.split()[1])
+								logger.info("Got - (%s) Pattern", ' '.join(pattern.split()[1:]))
 								break
 						elif '+' in pattern.split():
 							if ' '.join(pattern.split()[1:]) in log[:]:
 								self.filtered_log.append(log.split())
-								logger.info("Got + (%s) Pattern", pattern.split()[1])
+								logger.info("Got + (%s) Pattern", ' '.join(pattern.split()[1:]))
 								break
 						else:
 							logger.warning("There is some unknown symbol on pattern - !! (%s)", pattern)
