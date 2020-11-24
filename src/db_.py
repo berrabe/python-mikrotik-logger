@@ -84,14 +84,14 @@ class DB():
 		try:
 			if len(filtered_log) != 0:
 				logger.info("Checking Database Record, Prevent Duplication")
-				self.curr.execute(f"SELECT TIME,CATEGORY,LOG FROM '{self.db_table}_logs'")
+				self.curr.execute(f"SELECT DATE,TIME,CATEGORY,LOG FROM '{self.db_table}_logs'")
 				db_data = self.curr.fetchall()
 
 				for item in filtered_log:
 					item.insert(3, ' '.join(item[3:]))
 					del item[4:]
 
-					if tuple(item)[1:] not in db_data:
+					if tuple(item) not in db_data:
 						logger.info("Sending To Database (%s)", item)
 						self.curr.execute(f"INSERT INTO '{self.db_table}_logs' VALUES (NULL, :date, :time, :cat, :log)",
 							{'date' : item[0], 'time' : item[1], 'cat' : item[2], 'log' : " ".join(item[3:])})

@@ -42,7 +42,6 @@ class MikrotikLogger():
 		self.port = port
 		self.username = username
 		self.password = password
-		self.date = None
 
 		self.db_conn = src.db_.DB(self.host.replace('.','_'))
 		self.__filtering()
@@ -61,53 +60,22 @@ class MikrotikLogger():
 			ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 			ssh.connect(self.host, self.port, self.username, self.password, look_for_keys=False)
 
-			logger.info("SSH => Get Current Date")
-			stdin, date, stderr = ssh.exec_command(":put [/system clock get date]")
-
-			date = [i.split('/') for i in date.readlines()]
-			self.date = '/'.join(date[0][:2])
-
 			logger.info("SSH => Get Log File")
-			stdin, log, stderr = ssh.exec_command("/log print")
+			sftp = ssh.open_sftp()
+			sftp.get('PythonMikrotikLogger.0.txt',f".log_{self.host.replace('.','_')}")
+			sftp.close()
+
+			log_file = open(f".log_{self.host.replace('.','_')}",'r')
+			logs = log_file.readlines()
+			log_file.close()
 
 			logger.info("SSH => Success")
 
-			return log.readlines()
+			return logs
 
 		except Exception:
 			logger.exception("SSH TO MIKROTIK ERROR")
 			sys.exit(1)
-
-
-	def __add_log_date(self, logs):
-		"""
-		This method is useful for add date to raw_logs ...
-		cause mikrotik not included date when log in current day
-		"""
-
-		parse_log = []
-
-		try:
-			if len(logs) != 0:
-
-				for item in logs[:-1]:
-					item = item.split()
-
-					if len(item[0].split(':')) == 3:
-						item.insert(0, self.date)
-
-					parse_log.append(' '.join(item))
-
-			else:
-				logger.info("Empty Log, Abort Sending Database")
-
-			logger.info("Parsing Raw Log From (%s) - Success", self.host)
-			return parse_log
-
-		except Exception:
-			logger.exception('Sending To Database Error')
-			sys.exit(1)
-
 
 
 	def __filtering(self):
@@ -119,8 +87,7 @@ class MikrotikLogger():
 
 		try:
 			start = 0
-			raw_logs = self.__ssh()
-			logs = self.__add_log_date(raw_logs)
+			logs = self.__ssh()
 			session = self.db_conn.get_last_session()
 
 			for log in logs:
@@ -150,14 +117,13 @@ class MikrotikLogger():
 
 				logger.info("Got (%s) New Record", len(self.filtered_log))
 
-				# self.__db()
 				self.db_conn.insert_filtered_log(self.filtered_log)
 
 			else:
 				logger.info("No New Log Detected")
 
 			sess_buff = logs[-1].split()
-			logger.info("Last Record On (%s)", sess_buff)
+			logger.info("Last Record On (%s)", ' '.join(sess_buff))
 			self.db_conn.insert_latest_session(sess_buff)
 
 		except Exception:

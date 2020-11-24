@@ -19,7 +19,7 @@ if __name__ == '__main__':
 		logging.basicConfig(
 			level = logging.INFO,
 			filename='python-mikrotik-logger.log', filemode='a',
-			format = '[ %(levelname)s ] [ %(name)-18s ] [ %(asctime)s ] => %(message)s',
+			format = '[ %(levelname)s ] [ %(name)-23s ] [ %(asctime)s ] => %(message)s',
 			datefmt='%d-%b-%y %H:%M:%S'
 			)
 

@@ -13,6 +13,7 @@ main.py
 test.py
 db_test.py
 logs.db
+.log*
 
 # C extensions
 *.so
