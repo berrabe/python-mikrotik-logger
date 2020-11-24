@@ -13,6 +13,30 @@ secondly, the program will filter out the word patterns that we have given / set
 
 This program can be run anywhere, both Linux, Windows ,MacOS and agentless, meaning on the MikroTik side, no additional tools / scripts / programs are needed, **all you need is to allow ssh access to the MikroTik Device**
 
+
+<br/><br/>
+### MikroTik Configuration
+---
+I recommend some settings for mikrotik device(s) so that the python-mikrotik-logger program can work smoothly
+- First, move all log storage modes from default (memory) to disk, this is highly recommended considering mikrotik will clear all logs if the router shuts down / reboot
+```sh
+# add action mode called PythonMikrotikLogger
+> /system logging action add name="PythonMikrotikLogger" target=disk disk-file-name="PythonMikrotikLogger" disk-lines-per-file=2000 disk-file-count=1 disk-stop-on-full=no
+
+# change all log topic to PythonMikrotikLogger action
+> /system logging set [/system logging find where action~"PythonMikrotikLogger"] action=PythonMikrotikLogger
+```
+
+- Second, for security reasons, create a user with restricted permissions only to ssh and retrieve logs
+```sh
+# add group called monitoring
+> /user group add name="monitoring" policy=ssh,ftp,read,!local,!telnet,!reboot,!write,!policy,!test,!winbox,!password,!web,!sniff,!sensitive,!api,!romon,!dude,!tikapp skin=default
+
+# add user called monitoring with group monitoring
+> /user add name="monitoring" group=monitoring password=<YOUR CUSTOM PASSWORD>
+```
+
+
 <br/><br/>
 ### USAGE
 ---
@@ -59,24 +83,6 @@ mtk_devices:
 
 # if you need some verbose output of what this program is doing
 > cat python-mikrotik-logger.log
-```
-
-<br/><br/>
-### RECOMMENDATION
----
-I recommend some settings for mikrotik device(s) so that the python-mikrotik-logger program can work smoothly
-- First, move all log storage modes from default (memory) to disk, this is highly recommended considering mikrotik will clear all logs if the router shuts down / reboot
-```sh
-> /system logging set [/system logging find where action~"disk"] action=disk
-```
-
-- Second, for security reasons, create a user with restricted permissions only to ssh and retrieve logs
-```sh
-# add group called monitoring
-> /user group add name="monitoring" policy=ssh,read,!local,!telnet,!ftp,!reboot,!write,!policy,!test,!winbox,!password,!web,!sniff,!sensitive,!api,!romon,!dude,!tikapp skin=default
-
-# add user called monitoring with group monitoring
-> /user add name="monitoring" group=monitoring password=<YOUR CUSTOM PASSWORD>
 ```
 
 <br/><br/>
