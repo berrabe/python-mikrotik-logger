@@ -24,7 +24,7 @@ I recommend some settings for mikrotik device(s) so that the python-mikrotik-log
 > /system logging action add name="PythonMikrotikLogger" target=disk disk-file-name="PythonMikrotikLogger" disk-lines-per-file=2000 disk-file-count=1 disk-stop-on-full=no
 
 # change all log topic to PythonMikrotikLogger action
-> /system logging set [/system logging find where action~"PythonMikrotikLogger"] action=PythonMikrotikLogger
+> /system logging set [/system logging find where action!="PythonMikrotikLogger"] action=PythonMikrotikLogger
 ```
 
 - Second, for security reasons, create a user with restricted permissions only to ssh and retrieve logs
