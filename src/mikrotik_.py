@@ -7,6 +7,7 @@ created by berrabe
 """
 
 import sys
+import os
 import logging
 import datetime
 import paramiko
@@ -26,6 +27,9 @@ class MikrotikLogger():
 		must provide a list of patterns
 		so that the log can be filtered
 		"""
+		if not os.path.exists('logs'):
+			logger.info("Logs Folder Not Exist, Creating")
+			os.makedirs('logs')
 
 		if pattern is None:
 			pattern = [
