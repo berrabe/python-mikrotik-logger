@@ -8,6 +8,7 @@ created by berrabe
 
 import sys
 import logging
+import datetime
 import paramiko
 import src.db_
 
@@ -42,6 +43,7 @@ class MikrotikLogger():
 		self.port = port
 		self.username = username
 		self.password = password
+		self.date = datetime.datetime.now().strftime("%d-%b-%y")
 
 		self.db_conn = src.db_.DB(self.host.replace('.','_'))
 		self.__filtering()
@@ -62,10 +64,10 @@ class MikrotikLogger():
 
 			logger.info("SSH => Get Log File")
 			sftp = ssh.open_sftp()
-			sftp.get('PythonMikrotikLogger.0.txt',f".log_{self.host.replace('.','_')}")
+			sftp.get('PythonMikrotikLogger.0.txt',f"./logs/log__{self.date}__{self.host}")
 			sftp.close()
 
-			log_file = open(f".log_{self.host.replace('.','_')}",'r')
+			log_file = open(f"./logs/log__{self.date}__{self.host}",'r')
 			logs = log_file.readlines()
 			log_file.close()
 

@@ -7,6 +7,7 @@ read the docs :
 created by berrabe
 """
 
+import time
 import logging
 import sys
 import yaml
@@ -33,7 +34,8 @@ if __name__ == '__main__':
 
 		for host in hosts.keys():
 
-			logger.info(f"================== Logger Start @ {''.join(hosts[host]['mtk_host'][:])} ==================")
+			start_time = time.time()
+			logger.info("================== Logger Start @ %s ==================", ''.join(hosts[host]['mtk_host'][:]))
 
 			MikrotikLogger = mikrotik_.MikrotikLogger(
 				pattern = patterns,
@@ -47,7 +49,7 @@ if __name__ == '__main__':
 				token = var['telegram_token'],
 				chatid = var['telegran_chatid'])
 
-			logger.info(f"================== Logger Done @ {''.join(hosts[host]['mtk_host'][:])} ==================\n\n")
+			logger.info("================== Done @ %.2f Second ==================\n\n", time.time() - start_time)
 
 	except KeyboardInterrupt:
 		sys.exit(17)

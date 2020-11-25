@@ -14,6 +14,7 @@ test.py
 db_test.py
 logs.db
 .log*
+logs/
 
 # C extensions
 *.so
